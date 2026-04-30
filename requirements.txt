@@ -10,3 +10,4 @@ passlib==1.7.4
 bcrypt==5.0.0
 python-multipart==0.0.27
 redis==7.4.0
+datetime==6.0

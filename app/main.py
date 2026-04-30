@@ -13,6 +13,7 @@ from app.database import engine, Base
 from app.auth.routes import router as auth_router
 from app.cms.routes import router as cms_router
 from app.erp.routes import router as erp_router
+from app.cms.upload import router as upload_router
 
 
 # --- 生命周期管理 ---
@@ -65,7 +66,7 @@ app.mount("/static", StaticFiles(directory="app/static"), name="static")
 app.include_router(auth_router)
 app.include_router(cms_router)
 app.include_router(erp_router)
-
+app.include_router(upload_router)
 
 @app.get("/", tags=["Health Check"])
 async def root():

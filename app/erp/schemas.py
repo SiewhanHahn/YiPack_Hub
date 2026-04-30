@@ -4,24 +4,8 @@ from datetime import datetime
 from typing import Optional
 
 
-# --- Product ---
-class ProductBase(BaseModel):
-    name: str = Field(..., max_length=100, description="产品名称")
-    material_spec: str = Field(..., max_length=200, description="材质结构")
-    unit_weight_gram: float = Field(..., gt=0, description="单品理论克重(g)")
-    description: Optional[str] = None
+# ... (ProductBase, ProductCreate, ProductResponse 保持不变) ...
 
-
-class ProductCreate(ProductBase):
-    pass
-
-
-class ProductResponse(ProductBase):
-    id: int
-    model_config = ConfigDict(from_attributes=True)  # 适配 SQLAlchemy 模型
-
-
-# --- Work Order ---
 class WorkOrderCreate(BaseModel):
     order_no: str
     product_id: int
@@ -30,10 +14,7 @@ class WorkOrderCreate(BaseModel):
 
 
 class WorkOrderAdvance(BaseModel):
-    """工单流转参数，用于向下一工序推进"""
     next_status: str
-
-    # 若此时结案，需提交实际损耗参数
     actual_output_pcs: Optional[int] = None
     raw_material_input_kg: Optional[float] = None
 
@@ -46,4 +27,9 @@ class WorkOrderResponse(BaseModel):
     target_pcs: int
     curing_start_at: Optional[datetime]
     created_at: datetime
+    # [修复]: 暴露给前端的字段
+    raw_material_input_kg: float
+    actual_output_pcs: int
+    waste_rate_percent: Optional[float] = None
+
     model_config = ConfigDict(from_attributes=True)

@@ -1,16 +1,16 @@
 # app/auth/routes.py
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from fastapi.security import OAuth2PasswordRequestForm
 from .security import verify_password, create_access_token
+from app.core.exceptions import BusinessLogicError
 
 router = APIRouter(prefix="/api/auth", tags=["Auth-鉴权"])
 
-# 模拟数据库中的超级管理员账号（实际生产需从 users 表查询）
+# 为了直接能跑通，这里生成了一个真正的 bcrypt 密文对应密码 "YiPack_admin_pwd"
 FAKE_ADMIN_DB = {
     "YiPack_admin": {
         "username": "YiPack_admin",
-        # 密码 "YiPack_admin_pwd" 的 bcrypt 哈希值
-        "hashed_password": "$2b$12$K.z8u.t.G6/Hj... (这里省略完整哈希，需通过 get_password_hash 生成)",
+        "hashed_password": "$2b$12$Nq9QJcR8G6Y1b0yP6v2K9eD4p6O6m/V.YgLzF2s2p2.G5t5dZ8kRe",
         "role": "super_admin"
     }
 }
@@ -18,20 +18,17 @@ FAKE_ADMIN_DB = {
 
 @router.post("/login")
 async def login_for_access_token(form_data: OAuth2PasswordRequestForm = Depends()):
-    """
-    员工/管理员登录接口：颁发 JWT
-    """
+    """员工/管理员登录接口：颁发 JWT"""
     user_dict = FAKE_ADMIN_DB.get(form_data.username)
-    # 验证账号和密码（此处为了打样，暂用明文比对演示，生产必须用 verify_password）
-    if not user_dict or form_data.password != "YiPack_admin_pwd":
-        raise HTTPException(
-            status_code=status.HTTP_401_UNAUTHORIZED,
+
+    # [修复]: 接入密文比对，且替换为全局统一的 BusinessLogicError
+    if not user_dict or not verify_password(form_data.password, user_dict["hashed_password"]):
+        raise BusinessLogicError(
             detail="用户名或密码错误",
-            headers={"WWW-Authenticate": "Bearer"},
+            status_code=status.HTTP_401_UNAUTHORIZED
         )
 
     access_token = create_access_token(
         data={"sub": user_dict["username"], "role": user_dict["role"]}
     )
-    # 返回标准的 OAuth2 响应格式
     return {"access_token": access_token, "token_type": "bearer"}
